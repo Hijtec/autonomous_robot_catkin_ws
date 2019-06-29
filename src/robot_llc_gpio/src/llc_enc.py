@@ -15,17 +15,18 @@ class LLCencoder:
 		self.r_wheel_ticks_pub = rospy.Publisher('r_wheel_ticks',Float32, queue_size = 10)
 		#Setup
 		self.rate=50
+		self.l_wheel_enc_pin = 4
+		self.r_wheel_enc_pin = 17
 		#GPIO
 		GPIO.setmode(GPIO.BCM)
 		GPIO.setup(self.l_wheel_enc_pin, GPIO.IN)
 		GPIO.setup(self.r_wheel_enc_pin, GPIO.IN)
 		#Initialiazation
-		self.l_wheel_enc_pin = 4
-		self.r_wheel_enc_pin = 17
+		
 		self.l_wheel_ticks_count = 0
 		self.r_wheel_ticks_count = 0
 		self.l_wheel_state_previous = GPIO.input(self.l_wheel_enc_pin)
-		self.l_wheel_state_previous = GPIO.input(self.r_wheel_enc_pin)
+		self.r_wheel_state_previous = GPIO.input(self.r_wheel_enc_pin)
 		
 		
 	def change_state(self,state,previous):
@@ -73,6 +74,6 @@ def main():
 	encoder = LLCencoder();
 	encoder.spin()
 	
-if __name__ = '__main__':
+if __name__ == '__main__':
 	main();
 
