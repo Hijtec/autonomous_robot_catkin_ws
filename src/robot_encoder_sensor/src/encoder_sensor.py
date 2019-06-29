@@ -25,7 +25,6 @@ class EncoderSensor:
 		self.rate = rospy.get_param('~rate', 50)
 		self.distance_per_tick = (3.14159265*2*self.R)/self.Resolution
 
-
 		self.l_wheel_ang_vel = 0
 		self.r_wheel_ang_vel = 0
 		self.l_wheel_ticks_time_previous = rospy.Time.now()
@@ -72,7 +71,7 @@ class EncoderSensor:
 		rate = rospy.Rate(self.rate)
 		rospy.on_shutdown(self.shutdown)
 
-		while not rospy rospy.is_shutdown():
+		while not rospy.is_shutdown():
 			self.readdata()
 			self.r_wheel_enc_update()
 			self.l_wheel_enc_update()
