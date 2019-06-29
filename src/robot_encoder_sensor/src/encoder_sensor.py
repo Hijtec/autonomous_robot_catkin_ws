@@ -72,7 +72,6 @@ class EncoderSensor:
 		rospy.on_shutdown(self.shutdown)
 
 		while not rospy.is_shutdown():
-			self.readdata()
 			self.r_wheel_enc_update()
 			self.l_wheel_enc_update()
 			rate.sleep()
