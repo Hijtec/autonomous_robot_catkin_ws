@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
-	<node pkg="robot_llc_gpio" type="llc.py" name="llc_encoder" output="screen">
+	<node pkg="robot_llc_gpio" type="llc_enc.py" name="llc_encoder" output="screen">
 
 	</node>
 
