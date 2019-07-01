@@ -4,5 +4,9 @@
 	<node pkg="robot_llc_gpio" type="llc_enc.py" name="llc_encoder" output="screen">
 
 	</node>
+	
+	<node pkg="robot_llc_gpio" type="llc_gpio.py" name="llc_gpio" output="screen">
+
+	</node>
 
 </launch>
