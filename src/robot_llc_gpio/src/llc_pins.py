@@ -36,8 +36,8 @@ class LLCGPIO:
       #PWM Configuration
       self.l_pwm = GPIO.PWM(self.l_enable_motor, 1000)
       self.r_pwm = GPIO.PWM(self.r_enable_motor, 1000)
-      self.l_pwm.start(0)
-      self.r_pwm.start(0)
+      self.l_pwm.start(10)
+      self.r_pwm.start(10)
      
       #Subscribers: PWM_command,Direction
       self.l_wheel_ang_vel_motor_sub = rospy.Subscriber('l_wheel_ang_vel_motor', Float32, self.l_wheel_ang_vel_motor_callback)
