@@ -31,17 +31,18 @@ class LLCencoder:
 		
 	def change_state(self,state,previous):
 		if state != previous:
-			change = True
+			change = 1
 			previous = state
 			return change, previous
 			time.sleep(0.001)
 		else:
-			change = False
+			change = 0
 			return change, previous
 	
 	def tick_count(self,state,change,previous,count_ticks):
-		if state == 0 and change == True and previous == 0:
-			count_ticks+=count_ticks
+		if int(change) == 1 and int(previous) == 1:
+			count_ticks=count_ticks+1
+			print(count_ticks)
 		return count_ticks
 	
 	def spin(self):
@@ -67,13 +68,13 @@ class LLCencoder:
 		rospy.sleep(1)
 		
 	def publish(self):
-		self.l_wheel_ticks_pub.publish(self.l_wheel_ticks_count)
-		self.r_wheel_ticks_pub.publish(self.r_wheel_ticks_count)
+		self.l_wheel_ticks_pub.publish(self.l_wheel_state )
+		self.r_wheel_ticks_pub.publish(self.r_wheel_ticks_count )
 		
 def main():
 	encoder = LLCencoder();
 	encoder.spin()
 	
-if __name__ == '__main__':
+if __name__ =='__main__':
 	main();
 
