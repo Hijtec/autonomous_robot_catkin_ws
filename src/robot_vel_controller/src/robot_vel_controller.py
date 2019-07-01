@@ -171,5 +171,5 @@ def main():
 	controls_to_motors = ControlsToMotors();
 	controls_to_motors.spin()
 
-if __name__ = '__main__':
+if __name__ == '__main__':
 	main();
