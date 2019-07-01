@@ -35,7 +35,10 @@ class ControlsToMotors:
 		#Publish the computed angular velocity motor command
 		self.l_wheel_ang_vel_motor_pub = rospy.Publisher('l_wheel_ang_vel_motor', Float32, queue_size = 10)
 		self.r_wheel_ang_vel_motor_pub = rospy.Publisher('r_wheel_ang_vel_motor', Float32, queue_size = 10)
-
+		#Direction of the wheel: 1=Forwards 0=Backwards
+     		self.l_wheel_direction_pub = rospy.Publisher('l_wheel_direction', Float32, queue_size = 10)
+      		self.r_wheel_direction_pub = rospy.Publisher('r_wheel_direction', Float32, queue_size = 10)	     
+						     
 		###SUBSCRIBERS###
 		#Read encoders for PID control
 		self.l_wheel_ang_vel_enc_sub = rospy.Subscriber('l_wheel_ang_vel_enc', Float32, self.l_wheel_ang_vel_enc_callback)
@@ -105,13 +108,15 @@ class ControlsToMotors:
 	#motor2=right wheel
 	def motorcmd_2_robot(self, wheel = 'left', motor_command = 0):
 		if not self.debug_on:
-			motor_command_raw = int(abs(motor_command)
+			motor_command_raw = int(abs(motor_command))
 			if wheel == 'left':
-				if motor_command >= 0: pass #send motor1(1,0)
-				elif motor_command < 0: pass #send motor1(0,0)
+				if motor_command >= 0: self.l_wheel_direction_pub.publish(1) #send motor1(1,0)
+				elif motor_command < 0: self.l_wheel_direction_pub.publish(0) #send motor1(0,0)
+				self.l_wheel_ang_vel_motor_pub.publish(motor_command_raw)
 			if wheel == 'right':
-                                if motor_command >= 0: pass #send motor2(1,0)
-                                elif motor_command < 0: pass #send motor2(0,0)
+                                if motor_command >= 0: self.r_wheel_direction_pub.publish(1) #send motor2(1,0)
+                                elif motor_command < 0: self.r_wheel_direction_pub.publish(0) #send motor2(0,0)
+				self.r_wheel_ang_vel_motor_pub.publish(motor_command_raw)
 
 	###NEED INTERFACE NODE RPI<->VEL_CONTROLLER###
 	###DONT FORGET TO DETERMINE MIN AND MAX VELOCITIES!!!!###
@@ -124,9 +129,7 @@ class ControlsToMotors:
 		self.l_wheel_ang_vel_control_pub.publish_self.l_wheel_ang_vel_target)
 		#compute motor command
 		l_wheel_motor_cmd = self.angularvel_2_motorcmd(self.l_wheel_ang_vel_target)
-		self.l_wheel_ang_vel_motor_pub.publish(l_wheel_motor_cmd)
-
-		#send motor command
+		#send it to the llc_GPIO
 		self.motorcmd_2_robot('left',l_wheel_motor_cmd)
 
 	def r_wheel_update(self):
@@ -137,11 +140,9 @@ class ControlsToMotors:
 		self.r_wheel_ang_vel_control_pub.publish(self.r_wheel_ang_vel_target)
 		#compute motor command
 		r_wheel_motor_cmd = self.angularvel_2_motorcmd(self.r_wheel_ang_vel_target)
-		self.r_wheel_ang_vel_motor_pub.publish(r_wheel_motor_cmd)
-
-		#send motor command
+		#send it to the llc_GPIO
 		self.motorcmd_2_robot('right',r_wheel_motor_cmd)
-
+		
 	#The loop with timeout
 	def spin(self):
 		rospy.loginfo("Start robot_vel_controller")
