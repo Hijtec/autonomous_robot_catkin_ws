@@ -13,14 +13,15 @@ class CmdVelToDiffDriveMotors:
 		#Subscribers
 		self.cmdvel_sub = rospy.Subscriber('cmd_vel', Twist, self.twistCallback)
 		#Publishers		
-		self.l_wheel_ang_vel_target_pub = rospy.Publisher('l_wheel_ang_vel_target', Float32, queue_size = 10)
-		self.r_wheel_ang_vel_target_pub = rospy.Publisher('r_wheel_ang_vel_target', Float32, queue_size = 10)
+		self.l_wheel_tan_vel_target_pub = rospy.Publisher('l_wheel_tan_vel_target', Float32, queue_size = 10)
+		self.r_wheel_tan_vel_target_pub = rospy.Publisher('r_wheel_tan_vel_target', Float32, queue_size = 10)
 
 		self.L = rospy.get_param('~robot_wheel_separation_distance', 0.18)
 		self.R = rospy.get_param('~robot_wheel_radius', 0.035)
 
 		self.rate = rospy.get_param('~rate', 50)
 		self.timeout_idle = rospy.get_param('~timeout_idle', 2)
+		self.timeout_idle = rospy.Duration(self.timeout_idle)
 		self.time_prev_update = rospy.Time.now()
 
 		self.target_v = 0;
@@ -43,8 +44,8 @@ class CmdVelToDiffDriveMotors:
 
 	def shutdown(self):
 		rospy.loginfo("Stop diffdrive_controller")
-		self.l_wheel_ang_vel_target_pub.publish(0)
-		self.r_wheel_ang_vel_target_pub.publish(0)
+		self.l_wheel_tan_vel_target_pub.publish(0)
+		self.r_wheel_tan_vel_target_pub.publish(0)
 		rospy.sleep(1)
 
 	def update(self):
@@ -55,8 +56,8 @@ class CmdVelToDiffDriveMotors:
 		vr = (2*self.target_v + self.target_w*self.L) / (2)
 		vl = (2*self.target_v - self.target_w*self.L) / (2)
 
-		self.r_wheel_tangent_vel_target_pub.publish(vr)
-		self.l_wheel_tangent_vel_target_pub.publish(vl)
+		self.r_wheel_tan_vel_target_pub.publish(vr)
+		self.l_wheel_tan_vel_target_pub.publish(vl)
 
 	def twistCallback(self, msg):
 		self.target_v = msg.linear.x;

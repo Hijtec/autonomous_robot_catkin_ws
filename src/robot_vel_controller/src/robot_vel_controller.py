@@ -19,7 +19,7 @@ class ControlsToMotors:
 		self.motor_min_ang_vel = rospy.get_param('~motor_min_ang_vel', 1)
 
 		#And their corresponding motor commands
-		self.motor_cmd_max = rospy.get_param('~motor_cmd_max', 100
+		self.motor_cmd_max = rospy.get_param('~motor_cmd_max', 100)
 		self.motor_cmd_min = rospy.get_param('~motor_cmd_min', 30)
 
 		self.R = rospy.get_param('~robot_wheel_radius', 0.035)
@@ -44,8 +44,8 @@ class ControlsToMotors:
 		self.l_wheel_ang_vel_enc_sub = rospy.Subscriber('l_wheel_ang_vel_enc', Float32, self.l_wheel_ang_vel_enc_callback)
 		self.r_wheel_ang_vel_enc_sub = rospy.Subscriber('r_wheel_ang_vel_enc', Float32, self.r_wheel_ang_vel_enc_callback)
 		#Read in tangential velocity targets
-		self.l_wheel_tan_vel_target_sub = rospy.Subscriber('l_wheel_tangent_vel_target', Float32, self.l_wheel_tan_vel_target_callback)
-		self.r_wheel_tan_vel_target_sub = rospy.Subscriber('r_wheel_tangent_vel_target', Float32, self.r_wheel_tan_vel_target_callback)
+		self.l_wheel_tan_vel_target_sub = rospy.Subscriber('l_wheel_tan_vel_target', Float32, self.l_wheel_tan_vel_target_callback)
+		self.r_wheel_tan_vel_target_sub = rospy.Subscriber('r_wheel_tan_vel_target', Float32, self.r_wheel_tan_vel_target_callback)
 
 		###DECLARATION###
 		#Tangential velocity target
@@ -85,7 +85,7 @@ class ControlsToMotors:
 	def angularvel_2_motorcmd(self, angular_vel_target):
 		if angular_vel_target == 0: return 0;
 		#We approximate the function as a line
-		slope = self.motor_cmd_max - self.motor_cmd_min) / (self.motor_max_ang_vel - self.motor_min_ang_vel)
+		slope = (self.motor_cmd_max - self.motor_cmd_min) / (self.motor_max_ang_vel - self.motor_min_ang_vel)
 		intercept = self.motor_cmd_max - slope * self.motor_max_ang_vel
 
 		if angular_vel_target > 0: # positive angular velocity
@@ -126,7 +126,7 @@ class ControlsToMotors:
 		self.l_wheel_ang_vel_target = self.tangentvel_2_angularvel(self.l_wheel_tan_vel_target)
 		#publish that value
 		self.l_wheel_ang_vel_target_pub.publish(self.l_wheel_ang_vel_target)
-		self.l_wheel_ang_vel_control_pub.publish_self.l_wheel_ang_vel_target)
+		self.l_wheel_ang_vel_control_pub.publish(self.l_wheel_ang_vel_target)
 		#compute motor command
 		l_wheel_motor_cmd = self.angularvel_2_motorcmd(self.l_wheel_ang_vel_target)
 		#send it to the llc_GPIO

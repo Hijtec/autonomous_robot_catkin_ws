@@ -92,10 +92,6 @@ class LLCGPIO:
     		  	GPIO.output(self.r_input2_motor, GPIO.HIGH)
 			print('rb')
     
-    		else:
-			print('Wrong Wheel Direction SET')
-			print(wheel, direction)
-    
   	def l_wheel_update(self):
     		self.angvelmotor_2_setPWM('left')
     		self.setpins(direction = self.l_wheel_direction, wheel = 'left')
