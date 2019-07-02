@@ -22,13 +22,17 @@ class EncoderSensor:
 		#Parameters
 		self.Resolution = rospy.get_param('~encoder_resolution', 8)
 		self.R = rospy.get_param('~robot_wheel_radius', 0.035)
-		self.rate = rospy.get_param('~rate', 50)
+		self.rate = rospy.get_param('~rate', 5)
 		self.distance_per_tick = (3.14159265*2*self.R)/self.Resolution
 
 		self.l_wheel_ang_vel = 0
 		self.r_wheel_ang_vel = 0
 		self.l_wheel_ticks = 0
 		self.r_wheel_ticks = 0
+		self.l_wheel_ticks_previous = 0
+		self.r_wheel_ticks_previous = 0
+		self.l_wheel_ticks_time = rospy.Time.now()
+		self.r_wheel_ticks_time = rospy.Time.now()
 		self.l_wheel_ticks_time_previous = rospy.Time.now()
 		self.r_wheel_ticks_time_previous = rospy.Time.now()
 
@@ -42,11 +46,14 @@ class EncoderSensor:
 
 
 	def angularvel(self, delta_ticks = 0, delta_time = 10000):
-		ang_vel = (delta_ticks*self.distance_per_tick)/delta_time
-		return ang_vel
+		if delta_time.to_sec() ==  0: 
+			return 0
+		else:
+			ang_vel = (delta_ticks*self.distance_per_tick)/delta_time.to_sec()
+			return ang_vel
 
 	def encoderticks_2_angularvel(self, wheel = 'left', enc_ticks = 0):
-		enc_ticks_raw = int(abs(enc_ticks))
+		enc_ticks_raw = int(abs(enc_ticks));
 		if enc_ticks_raw == 0: return 0
 		elif self.r_wheel_ticks_time-self.r_wheel_ticks_time_previous == 0: return 0
 		elif self.l_wheel_ticks_time-self.l_wheel_ticks_time_previous == 0: return 0
@@ -54,6 +61,7 @@ class EncoderSensor:
 			self.r_wheel_delta_ticks = self.r_wheel_ticks-self.r_wheel_ticks_previous #difference of ticks
 			self.r_wheel_delta_time = self.r_wheel_ticks_time-self.r_wheel_ticks_time_previous #difference of time
 			self.r_wheel_ticks_time_previous = self.r_wheel_ticks_time
+			self.r_wheel_ticks_previous = self.r_wheel_ticks
 			#Compute angular velocity			
 			r_wheel_ang_vel_enc = self.angularvel(delta_ticks = self.r_wheel_delta_ticks, delta_time = self.r_wheel_delta_time) 
 			
@@ -63,6 +71,7 @@ class EncoderSensor:
 			self.l_wheel_delta_ticks = self.l_wheel_ticks-self.l_wheel_ticks_previous #difference of ticks
 			self.l_wheel_delta_time = self.l_wheel_ticks_time-self.l_wheel_ticks_time_previous #difference of time
 			self.l_wheel_ticks_time_previous = self.l_wheel_ticks_time
+			self.l_wheel_ticks_previous = self.l_wheel_ticks
 			#Compute angular velocity
 			l_wheel_ang_vel_enc = self.angularvel(delta_ticks = self.l_wheel_delta_ticks, delta_time = self.l_wheel_delta_time)
 			

@@ -67,9 +67,9 @@ class LLCGPIO:
   	#Motor command to PWM update
   	def angvelmotor_2_setPWM(self,wheel = 'left'):
     		if wheel == 'left':
-    			self.l_pwm.ChangeDutyCycle(self.l_wheel_ang_vel_motor)
+    			self.l_pwm.ChangeDutyCycle(int(self.l_wheel_ang_vel_motor))
     		if wheel == 'right':
-      			self.r_pwm.ChangeDutyCycle(self.r_wheel_ang_vel_motor)
+      			self.r_pwm.ChangeDutyCycle(int(self.r_wheel_ang_vel_motor))
   
   	#Motor pins config
   	def setpins(self, direction, wheel = 'left') :
@@ -77,20 +77,16 @@ class LLCGPIO:
     		if wheel == 'left' and direction == 1:
       			GPIO.output(self.l_input1_motor, GPIO.HIGH)
       			GPIO.output(self.l_input2_motor, GPIO.LOW)
-			print('lf')
     		if wheel == 'left' and direction == 0:
       			GPIO.output(self.l_input1_motor, GPIO.LOW)
       			GPIO.output(self.l_input2_motor, GPIO.HIGH)
-			print('lb')
     
    		if wheel == 'right' and direction == 1:
       			GPIO.output(self.r_input1_motor, GPIO.HIGH)
       			GPIO.output(self.r_input2_motor, GPIO.LOW)
-			print('rf')
     		if wheel == 'right' and direction == 0:
      			GPIO.output(self.r_input1_motor, GPIO.LOW)
     		  	GPIO.output(self.r_input2_motor, GPIO.HIGH)
-			print('rb')
     
   	def l_wheel_update(self):
     		self.angvelmotor_2_setPWM('left')

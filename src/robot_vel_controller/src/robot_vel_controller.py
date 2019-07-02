@@ -14,13 +14,13 @@ class ControlsToMotors:
 		self.rate = rospy.get_param('~rate', 50)
 
 		#Wheels can turn a maximum of xxx rad/s when PWM_rate = 100
-		self.motor_max_ang_vel = rospy.get_param('~motor_max_ang_vel', 4)
+		self.motor_max_ang_vel = rospy.get_param('~motor_max_ang_vel', 2)
 		#Wheels can turn a minimum of xxx rad/s when PWM_rate = 30
-		self.motor_min_ang_vel = rospy.get_param('~motor_min_ang_vel', 1)
+		self.motor_min_ang_vel = rospy.get_param('~motor_min_ang_vel', 0)
 
 		#And their corresponding motor commands
 		self.motor_cmd_max = rospy.get_param('~motor_cmd_max', 100)
-		self.motor_cmd_min = rospy.get_param('~motor_cmd_min', 30)
+		self.motor_cmd_min = rospy.get_param('~motor_cmd_min', 0)
 
 		self.R = rospy.get_param('~robot_wheel_radius', 0.035)
 		self.debug_on = rospy.get_param('~debug_on', False)

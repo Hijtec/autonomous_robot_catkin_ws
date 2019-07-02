@@ -3,7 +3,7 @@
 
 	<node pkg="robot_llc_gpio" type="llc_enc.py" name="llc_encoder" output="screen"></node>
 	<node pkg="robot_llc_gpio" type="llc_gpio.py" name="llc_gpio" output="screen"></node>
-  		<node pkg="robot_encoder_sensor" type="encoder_sensor.py" name="encoder_sensor" output="screen"></node>
+  	<node pkg="robot_encoder_sensor" type="encoder_sensor.py" name="encoder_sensor" output="screen"></node>
 	<node pkg="robot_vel_controller" type="robot_vel_controller.py" name="robot_vel_controller" output="screen"></node>
   	<node pkg="diffdrive_controller" type="diffdrive_controller.py" name="diffdrive_controller" output="screen"></node>
 
