@@ -99,12 +99,12 @@ class LLCGPIO:
   	def spin(self):
     		rospy.loginfo("Start llc_gpio")
     		rate = rospy.Rate(self.rate)
-    		rospy.on_shutdown(self.shutdown)
-
+    		
     		while not rospy.is_shutdown():
       			self.r_wheel_update()
       			self.l_wheel_update()
       			rate.sleep()
+		rospy.on_shutdown(self.shutdown)
   		rospy.spin();
     
 	def shutdown(self):

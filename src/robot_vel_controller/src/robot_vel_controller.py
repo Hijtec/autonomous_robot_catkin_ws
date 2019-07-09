@@ -20,10 +20,16 @@ class ControlsToMotors:
 
 		#And their corresponding motor commands
 		self.motor_cmd_max = rospy.get_param('~motor_cmd_max', 100)
-		self.motor_cmd_min = rospy.get_param('~motor_cmd_min', 0)
+		self.motor_cmd_min = rospy.get_param('~motor_cmd_min', 10)
 
 		self.R = rospy.get_param('~robot_wheel_radius', 0.035)
 		self.debug_on = rospy.get_param('~debug_on', False)
+		self.pid_on = rospy.get_param('~pid_on', True)
+
+		#PID setup
+		self.Kp = rospy.get_param('~Kp', 2.2)
+		self.Ki = rospy.get_param('~Ki', 0.4)
+		self.Kd = rospy.get_param('~Kd', 0.2)
 
 		###PUBLISHERS###
 		#Publish the computed ang_vel targets
@@ -57,6 +63,9 @@ class ControlsToMotors:
 		#Angular velocity encoder readings
 		self.l_wheel_ang_vel_enc = 0
 		self.r_wheel_ang_vel_enc = 0
+		#PID control variables
+		self.l_wheel_pid = {}
+    		self.r_wheel_pid = {}
 
 	###DEFINE READING OF DATA###
 	#Read tangetnial velocity targets
@@ -78,7 +87,35 @@ class ControlsToMotors:
 	def tangentvel_2_angularvel(self,tangent_vel):
 		angular_vel = tangent_vel / self.R;
 		return angular_vel
+	
 
+	def pid_control(self, wheel_pid, target, state):
+	
+		if len(wheel_pid) == 0:
+			wheel_pid.update({'time_prev':rospy.Time.now(), 'derivative':0, 'integral':[0]*10, 'error_prev':0, 'error_curr':0}) #INIT of dictionary
+		wheel_pid['time_curr'] = rospy.Time.now()
+		wheel_pid['dt'] = (wheel_pid['time_curr'] - wheel_pid['time_prev']).to_sec()
+		if wheel_pid['dt'] == 0: 
+			return 0 #robustness precaution
+		wheel_pid['error_curr'] = target - state
+		wheel_pid['integral'] = wheel_pid['integral'][1:] + [(wheel_pid['error_curr']*wheel_pid['dt'])] # integral part
+		wheel_pid['derivative'] = (wheel_pid['error_curr'] - wheel_pid['error_prev']) / wheel_pid['dt'] #derivative part
+		wheel_pid['error_prev'] = wheel_pid['error_curr']
+
+		#Compute control signal
+		control_signal = (self.Kp*wheel_pid['error_curr'] + self.Ki*sum(wheel_pid['integral']) + self.Kd*wheel_pid['derivative'])
+		#Set new target
+		target_new = target + control_signal
+
+		#Ensure proper sign of the target velocity
+		if target > 0 and target_new > 0: target_new = target;
+		if target < 0 and target_new < 0: target_new = target;
+		if target == 0:
+			target_new = 0
+			return target_new
+		wheel_pid['time_prev'] = wheel_pid['time_curr']
+		return target_new
+	
 	#Mapping ang_vel targets to motor commands
 	#motor commands are ints between 0-100
 	#we assume motor commands are issued between motor_min_ang_vel AND motor_max_ang_vel
@@ -126,6 +163,9 @@ class ControlsToMotors:
 		self.l_wheel_ang_vel_target = self.tangentvel_2_angularvel(self.l_wheel_tan_vel_target)
 		#publish that value
 		self.l_wheel_ang_vel_target_pub.publish(self.l_wheel_ang_vel_target)
+		#PID
+		if self.pid_on:
+			self.l_wheel_ang_vel_target = self.pid_control(self.l_wheel_pid, self.l_wheel_ang_vel_target, self.l_wheel_ang_vel_enc)
 		self.l_wheel_ang_vel_control_pub.publish(self.l_wheel_ang_vel_target)
 		#compute motor command
 		l_wheel_motor_cmd = self.angularvel_2_motorcmd(self.l_wheel_ang_vel_target)
@@ -137,6 +177,9 @@ class ControlsToMotors:
 		self.r_wheel_ang_vel_target = self.tangentvel_2_angularvel(self.r_wheel_tan_vel_target)
 		#publish that value
 		self.r_wheel_ang_vel_target_pub.publish(self.r_wheel_ang_vel_target)
+		#PID
+		if self.pid_on:
+			self.r_wheel_ang_vel_target = self.pid_control(self.r_wheel_pid, self.r_wheel_ang_vel_target, self.r_wheel_ang_vel_enc)
 		self.r_wheel_ang_vel_control_pub.publish(self.r_wheel_ang_vel_target)
 		#compute motor command
 		r_wheel_motor_cmd = self.angularvel_2_motorcmd(self.r_wheel_ang_vel_target)

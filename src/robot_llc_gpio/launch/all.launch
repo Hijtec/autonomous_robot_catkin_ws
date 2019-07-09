@@ -3,8 +3,19 @@
 
 	<node pkg="robot_llc_gpio" type="llc_enc.py" name="llc_encoder" output="screen"></node>
 	<node pkg="robot_llc_gpio" type="llc_gpio.py" name="llc_gpio" output="screen"></node>
-  	<node pkg="robot_encoder_sensor" type="encoder_sensor.py" name="encoder_sensor" output="screen"></node>
-	<node pkg="robot_vel_controller" type="robot_vel_controller.py" name="robot_vel_controller" output="screen"></node>
+  	<node pkg="robot_vel_controller" type="robot_vel_controller.py" name="robot_vel_controller" output="screen"></node>
   	<node pkg="diffdrive_controller" type="diffdrive_controller.py" name="diffdrive_controller" output="screen"></node>
+  	<node pkg="diffdrive_odom" type="diffdrive_odom.py" name="diffdrive_odom" output="screen"></node>
+	<node pkg="robot_encoder_sensor" type="encoder_sensor.py" name="encoder_sensor" output="screen"></node>
 
+	<node name="rplidarNode"          pkg="rplidar_ros"  type="rplidarNode" output="screen">
+		  <param name="serial_port"         type="string" value="/dev/ttyUSB0"/>  
+		  <param name="serial_baudrate"     type="int"    value="256000"/><!--A3 -->
+		  <param name="frame_id"            type="string" value="laser"/>
+		  <param name="inverted"            type="bool"   value="false"/>
+		  <param name="angle_compensate"    type="bool"   value="false"/>
+  	<param name="scan_mode"           type="string" value="Boost"/>
+ 	 </node>
+
+	<node pkg="tf" type="static_transform_publisher" name="base_link_to_laser" args="0.0 0.0 0.0 0.0 0.0 0.0 /base_link /laser 50"></node>
 </launch>
