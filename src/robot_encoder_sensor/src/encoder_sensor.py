@@ -3,7 +3,7 @@ import rospy
 import roslib
 
 # Messages
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Float64
 
 '''
 Input:Ticks from encoder
@@ -16,17 +16,21 @@ class EncoderSensor:
 		#Subscribers
 		self.l_wheel_ticks_sub = rospy.Subscriber('l_wheel_ticks', Float32, self.l_wheel_ticks_callback)
 		self.r_wheel_ticks_sub = rospy.Subscriber('r_wheel_ticks', Float32, self.r_wheel_ticks_callback)
+		self.l_wheel_direction_sub = rospy.Subscriber('l_wheel_direction', Float32, self.l_wheel_direction_callback)
+      		self.r_wheel_direction_sub = rospy.Subscriber('r_wheel_direction', Float32, self.r_wheel_direction_callback)
 		#Publishers
-		self.l_wheel_ang_vel_enc_pub = rospy.Publisher('l_wheel_ang_vel_enc', Float32, queue_size = 10)
-		self.r_wheel_ang_vel_enc_pub = rospy.Publisher('r_wheel_ang_vel_enc', Float32, queue_size = 10)
+		self.l_wheel_ang_vel_enc_pub = rospy.Publisher('l_wheel_ang_vel_enc', Float64, queue_size = 10)
+		self.r_wheel_ang_vel_enc_pub = rospy.Publisher('r_wheel_ang_vel_enc', Float64, queue_size = 10)
 		#Parameters
-		self.Resolution = rospy.get_param('~encoder_resolution', 8)
+		self.Resolution = rospy.get_param('~encoder_resolution', 16)
 		self.R = rospy.get_param('~robot_wheel_radius', 0.035)
-		self.rate = rospy.get_param('~rate', 5)
-		self.distance_per_tick = (3.14159265*2*self.R)/self.Resolution
+		self.rate = rospy.get_param('~rate', 30)
+		self.angle_per_tick = (3.14159265*2)/self.Resolution
 
 		self.l_wheel_ang_vel = 0
 		self.r_wheel_ang_vel = 0
+		self.l_wheel_direction = 1
+		self.r_wheel_direction = 1
 		self.l_wheel_ticks = 0
 		self.r_wheel_ticks = 0
 		self.l_wheel_ticks_previous = 0
@@ -44,15 +48,20 @@ class EncoderSensor:
 		self.r_wheel_ticks = msg.data
 		self.r_wheel_ticks_time = rospy.Time.now()
 
+	def l_wheel_direction_callback(self, msg):
+		self.l_wheel_direction = msg.data
+	def r_wheel_direction_callback(self, msg):
+		self.r_wheel_direction = msg.data
+
 
 	def angularvel(self, delta_ticks = 0, delta_time = 10000):
 		if delta_time.to_sec() ==  0: 
 			return 0
 		else:
-			ang_vel = (delta_ticks*self.distance_per_tick)/delta_time.to_sec()
+			ang_vel = (delta_ticks*self.angle_per_tick)/delta_time.to_sec()
 			return ang_vel
 
-	def encoderticks_2_angularvel(self, wheel = 'left', enc_ticks = 0):
+	def encoderticks_2_angularvel(self, wheel = 'left', enc_ticks = 0, direction = 1):
 		enc_ticks_raw = int(abs(enc_ticks));
 		if enc_ticks_raw == 0: return 0
 		elif self.r_wheel_ticks_time-self.r_wheel_ticks_time_previous == 0: return 0
@@ -64,7 +73,9 @@ class EncoderSensor:
 			self.r_wheel_ticks_previous = self.r_wheel_ticks
 			#Compute angular velocity			
 			r_wheel_ang_vel_enc = self.angularvel(delta_ticks = self.r_wheel_delta_ticks, delta_time = self.r_wheel_delta_time) 
-			
+			if direction == 0:
+				r_wheel_ang_vel_enc = -1*r_wheel_ang_vel_enc
+
 			return r_wheel_ang_vel_enc
 
 		elif wheel == 'left':
@@ -74,7 +85,9 @@ class EncoderSensor:
 			self.l_wheel_ticks_previous = self.l_wheel_ticks
 			#Compute angular velocity
 			l_wheel_ang_vel_enc = self.angularvel(delta_ticks = self.l_wheel_delta_ticks, delta_time = self.l_wheel_delta_time)
-			
+			if direction == 0:
+				l_wheel_ang_vel_enc = -1*l_wheel_ang_vel_enc
+
 			return l_wheel_ang_vel_enc
 
 	def spin(self):
@@ -97,12 +110,12 @@ class EncoderSensor:
 
 	def r_wheel_enc_update(self):
 		#converts subsribed ticks to ang_vel
-		r_wheel_ang_vel = self.encoderticks_2_angularvel('right',self.r_wheel_ticks)
+		r_wheel_ang_vel = self.encoderticks_2_angularvel('right',self.r_wheel_ticks, self.r_wheel_direction)
 		self.r_wheel_ang_vel_enc_pub.publish(r_wheel_ang_vel) #publish ang_vel
 
 	def l_wheel_enc_update(self):
 		#converts subsribed ticks to ang_vel
-		l_wheel_ang_vel = self.encoderticks_2_angularvel('left',self.l_wheel_ticks)
+		l_wheel_ang_vel = self.encoderticks_2_angularvel('left',self.l_wheel_ticks, self.l_wheel_direction)
 		self.l_wheel_ang_vel_enc_pub.publish(l_wheel_ang_vel) #publish ang_vel
 
 def main():

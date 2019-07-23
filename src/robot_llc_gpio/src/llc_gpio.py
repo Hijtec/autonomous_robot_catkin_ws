@@ -11,12 +11,12 @@ class LLCGPIO:
 		rospy.init_node('llc_gpio')
 		self.rate = rospy.get_param('~rate', 50)
 		#Parameters
-		self.l_enable_motor = rospy.get_param('~l_enable_motor', 18) #en2
-		self.l_input2_motor = rospy.get_param('~l_input1_motor', 27) #in3
-		self.l_input1_motor = rospy.get_param('~l_input2_motor', 22) #in4
-		self.r_enable_motor = rospy.get_param('~r_enable_motor', 25) #en1
-		self.r_input1_motor = rospy.get_param('~r_input1_motor', 24) #in1
-		self.r_input2_motor = rospy.get_param('~r_input2_motor', 23) #in2
+		self.l_enable_motor = rospy.get_param('~l_enable_motor', 25) #en2
+		self.l_input2_motor = rospy.get_param('~l_input1_motor', 23) #in4
+		self.l_input1_motor = rospy.get_param('~l_input2_motor', 24) #in3
+		self.r_enable_motor = rospy.get_param('~r_enable_motor', 18) #en1
+		self.r_input1_motor = rospy.get_param('~r_input1_motor', 22) #in1
+		self.r_input2_motor = rospy.get_param('~r_input2_motor', 27) #in2
 
 		#GPIO Setup
 		GPIO.setmode(GPIO.BCM)

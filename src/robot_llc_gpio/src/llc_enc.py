@@ -25,6 +25,8 @@ class LLCencoder:
 		
 		self.l_wheel_ticks_count = 0
 		self.r_wheel_ticks_count = 0
+		self.l_wheel_update = 1
+		self.r_wheel_update = 1
 		self.l_wheel_state_previous = GPIO.input(self.l_wheel_enc_pin)
 		self.r_wheel_state_previous = GPIO.input(self.r_wheel_enc_pin)
 		
@@ -33,14 +35,26 @@ class LLCencoder:
 		if state != previous:
 			change = 1
 			previous = state
-			return change, previous
-			time.sleep(0.001)
+			change_timestamp = rospy.Time.now()
+			return change, previous, change_timestamp
+			time.sleep(0.005)
 		else:
 			change = 0
-			return change, previous
+			change_timestamp = 0
+			return change, previous, change_timestamp
+
+	def update_state(self, change_timestamp):
+		if change_timestamp == 0: 
+			return 0
+		else:
+			deltatime = (rospy.Time.now()-change_timestamp).to_sec()
+			if deltatime >= 0.005:
+				return 1
+			else:
+				return 0
 	
-	def tick_count(self,state,change,previous,count_ticks):
-		if int(change) == 1 and int(previous) == 1:
+	def tick_count(self,state,change,previous,count_ticks,update):
+		if int(change) == 1 and int(previous) == 1 and update == 1:
 			count_ticks=count_ticks+1
 			#print(count_ticks)
 		return count_ticks
@@ -51,12 +65,16 @@ class LLCencoder:
 		while not rospy.is_shutdown():
 			#LEFT ENCODER
 			self.l_wheel_state = GPIO.input(self.l_wheel_enc_pin)
-			self.l_wheel_change, self.l_wheel_state_previous = self.change_state(self.l_wheel_state, self.l_wheel_state_previous)
-			self.l_wheel_ticks_count = self.tick_count(self.l_wheel_state, self.l_wheel_change, self.l_wheel_state_previous, self.l_wheel_ticks_count)
+			self.l_wheel_change, self.l_wheel_state_previous, self.l_wheel_change_timestamp = self.change_state(self.l_wheel_state, self.l_wheel_state_previous)
+			#if self.l_wheel_update == 0:
+			#	self.l_wheel_update = self.update_state(self.l_wheel_change_timestamp)
+			self.l_wheel_ticks_count = self.tick_count(self.l_wheel_state, self.l_wheel_change, self.l_wheel_state_previous, self.l_wheel_ticks_count, self.l_wheel_update)
 			#RIGHT ENCODER
 			self.r_wheel_state = GPIO.input(self.r_wheel_enc_pin)
-			self.r_wheel_change, self.r_wheel_state_previous = self.change_state(self.r_wheel_state, self.r_wheel_state_previous)
-			self.r_wheel_ticks_count = self.tick_count(self.r_wheel_state, self.r_wheel_change, self.r_wheel_state_previous, self.r_wheel_ticks_count)
+			self.r_wheel_change, self.r_wheel_state_previous, self.r_wheel_change_timestamp = self.change_state(self.r_wheel_state, self.r_wheel_state_previous)
+			#if self.r_wheel_update == 0:
+			#	self.r_wheel_update = self.update_state(self.r_wheel_change_timestamp)
+			self.r_wheel_ticks_count = self.tick_count(self.r_wheel_state, self.r_wheel_change, self.r_wheel_state_previous, self.r_wheel_ticks_count, self.r_wheel_update)
 			#PUBLISHING
 			self.publish()
 		rospy.spin();

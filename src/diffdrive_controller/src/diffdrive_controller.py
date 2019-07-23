@@ -27,6 +27,11 @@ class CmdVelToDiffDriveMotors:
 		self.target_v = 0;
 		self.target_w = 0;
 
+	def twistCallback(self, msg):
+		self.target_v = msg.linear.x;
+		self.target_w = msg.angular.z;
+		self.time_prev_update = rospy.Time.now()
+
 	# When not given commands for some specified time, do not move
 	def spin(self):
 		rospy.loginfo("Start diffdrive_controller")
@@ -53,16 +58,13 @@ class CmdVelToDiffDriveMotors:
 		##Input: target velocity v AND target angular velocity w
 		##Relation: robot has wheels with radius R and distance between wheels L
 		##Output: wheel velocity for left (vl) and right (vr) wheel
-		vr = (2*self.target_v + self.target_w*self.L) / (2)
-		vl = (2*self.target_v - self.target_w*self.L) / (2)
+		vr = (2*self.target_v + self.target_w*self.L) / (2*self.R)
+		vl = (2*self.target_v - self.target_w*self.L) / (2*self.R)
 
 		self.r_wheel_tan_vel_target_pub.publish(vr)
 		self.l_wheel_tan_vel_target_pub.publish(vl)
 
-	def twistCallback(self, msg):
-		self.target_v = msg.linear.x;
-		self.target_w = msg.angular.z;
-		self.time_prev_update = rospy.Time.now()
+	
 
 def main():
 	cmdvel_to_motors = CmdVelToDiffDriveMotors();

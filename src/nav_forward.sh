@@ -1,3 +1,3 @@
 #!/bin/bash
 
-rosrun nav_behaviors nav_timed.py _time_to_run:=20.0 _v_target:=0.025 _w_target:=0.01
+rosrun nav_behaviors nav_timed.py _time_to_run:=2.0 _v_target:=0.04 _w_target:=0.00

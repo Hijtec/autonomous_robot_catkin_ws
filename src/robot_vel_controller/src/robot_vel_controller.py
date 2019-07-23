@@ -3,7 +3,7 @@ import rospy
 import roslib
 
 # Messages
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Float64
 
 # Issue commands to the motors to achieve the target velocity
 # Use a PID that compares the error based on encoder readings - not yet implemented
@@ -13,23 +13,23 @@ class ControlsToMotors:
 		rospy.init_node('robot_vel_controller')
 		self.rate = rospy.get_param('~rate', 50)
 
-		#Wheels can turn a maximum of xxx rad/s when PWM_rate = 100
-		self.motor_max_ang_vel = rospy.get_param('~motor_max_ang_vel', 2)
-		#Wheels can turn a minimum of xxx rad/s when PWM_rate = 30
-		self.motor_min_ang_vel = rospy.get_param('~motor_min_ang_vel', 0)
+		#Wheels can turn a maximum of xxx rad/s when PWM_rate = 80
+		self.motor_max_ang_vel = rospy.get_param('~motor_max_ang_vel', 0.8)
+		#Wheels can turn a minimum of xxx rad/s when PWM_rate = 25
+		self.motor_min_ang_vel = rospy.get_param('~motor_min_ang_vel', 0.6)
 
 		#And their corresponding motor commands
-		self.motor_cmd_max = rospy.get_param('~motor_cmd_max', 100)
-		self.motor_cmd_min = rospy.get_param('~motor_cmd_min', 10)
+		self.motor_cmd_max = rospy.get_param('~motor_cmd_max', 80)
+		self.motor_cmd_min = rospy.get_param('~motor_cmd_min', 25)
 
 		self.R = rospy.get_param('~robot_wheel_radius', 0.035)
 		self.debug_on = rospy.get_param('~debug_on', False)
-		self.pid_on = rospy.get_param('~pid_on', True)
+		self.pid_on = rospy.get_param('~pid_on', False)
 
 		#PID setup
-		self.Kp = rospy.get_param('~Kp', 2.2)
-		self.Ki = rospy.get_param('~Ki', 0.4)
-		self.Kd = rospy.get_param('~Kd', 0.2)
+		self.Kp = rospy.get_param('~Kp', 1.8)
+		self.Ki = rospy.get_param('~Ki', 0.1)
+		self.Kd = rospy.get_param('~Kd', 0)
 
 		###PUBLISHERS###
 		#Publish the computed ang_vel targets
@@ -47,8 +47,8 @@ class ControlsToMotors:
 						     
 		###SUBSCRIBERS###
 		#Read encoders for PID control
-		self.l_wheel_ang_vel_enc_sub = rospy.Subscriber('l_wheel_ang_vel_enc', Float32, self.l_wheel_ang_vel_enc_callback)
-		self.r_wheel_ang_vel_enc_sub = rospy.Subscriber('r_wheel_ang_vel_enc', Float32, self.r_wheel_ang_vel_enc_callback)
+		self.l_wheel_ang_vel_enc_sub = rospy.Subscriber('l_wheel_ang_vel_enc', Float64, self.l_wheel_ang_vel_enc_callback)
+		self.r_wheel_ang_vel_enc_sub = rospy.Subscriber('r_wheel_ang_vel_enc', Float64, self.r_wheel_ang_vel_enc_callback)
 		#Read in tangential velocity targets
 		self.l_wheel_tan_vel_target_sub = rospy.Subscriber('l_wheel_tan_vel_target', Float32, self.l_wheel_tan_vel_target_callback)
 		self.r_wheel_tan_vel_target_sub = rospy.Subscriber('r_wheel_tan_vel_target', Float32, self.r_wheel_tan_vel_target_callback)
@@ -92,7 +92,7 @@ class ControlsToMotors:
 	def pid_control(self, wheel_pid, target, state):
 	
 		if len(wheel_pid) == 0:
-			wheel_pid.update({'time_prev':rospy.Time.now(), 'derivative':0, 'integral':[0]*10, 'error_prev':0, 'error_curr':0}) #INIT of dictionary
+			wheel_pid.update({'time_prev':rospy.Time.now(), 'derivative':0, 'integral':[0]*10, 'error_prev':0, 'error_curr':0}) #INIT of PID dictionary
 		wheel_pid['time_curr'] = rospy.Time.now()
 		wheel_pid['dt'] = (wheel_pid['time_curr'] - wheel_pid['time_prev']).to_sec()
 		if wheel_pid['dt'] == 0: 
@@ -112,7 +112,6 @@ class ControlsToMotors:
 		if target < 0 and target_new < 0: target_new = target;
 		if target == 0:
 			target_new = 0
-			return target_new
 		wheel_pid['time_prev'] = wheel_pid['time_curr']
 		return target_new
 	
@@ -120,7 +119,7 @@ class ControlsToMotors:
 	#motor commands are ints between 0-100
 	#we assume motor commands are issued between motor_min_ang_vel AND motor_max_ang_vel
 	def angularvel_2_motorcmd(self, angular_vel_target):
-		if angular_vel_target == 0: return 0;
+		
 		#We approximate the function as a line
 		slope = (self.motor_cmd_max - self.motor_cmd_min) / (self.motor_max_ang_vel - self.motor_min_ang_vel)
 		intercept = self.motor_cmd_max - slope * self.motor_max_ang_vel
@@ -138,7 +137,10 @@ class ControlsToMotors:
                         if motor_cmd < self.motor_cmd_min: motor_cmd = self.motor_cmd_min
 			motor_cmd = -motor_cmd
 
-		return motor_cmd
+		if angular_vel_target == 0: 
+			return 0;
+		else:
+			return motor_cmd
 
 	###SEND MOTOR COMMAND TO ROBOT###
 	#motor1=left wheel, motor1(1,x) means forward, motor1(0,x) means backwards
@@ -155,7 +157,6 @@ class ControlsToMotors:
                                 elif motor_command < 0: self.r_wheel_direction_pub.publish(0) #send motor2(0,0)
 				self.r_wheel_ang_vel_motor_pub.publish(motor_command_raw)
 
-	###NEED INTERFACE NODE RPI<->VEL_CONTROLLER###
 	###DONT FORGET TO DETERMINE MIN AND MAX VELOCITIES!!!!###
 
 	def l_wheel_update(self):
@@ -165,7 +166,7 @@ class ControlsToMotors:
 		self.l_wheel_ang_vel_target_pub.publish(self.l_wheel_ang_vel_target)
 		#PID
 		if self.pid_on:
-			self.l_wheel_ang_vel_target = self.pid_control(self.l_wheel_pid, self.l_wheel_ang_vel_target, self.l_wheel_ang_vel_enc)
+			self.l_wheel_ang_vel_target = self.pid_control(self.l_wheel_pid, self.l_wheel_ang_vel_target, self.l_wheel_ang_vel_enc) *0.85
 		self.l_wheel_ang_vel_control_pub.publish(self.l_wheel_ang_vel_target)
 		#compute motor command
 		l_wheel_motor_cmd = self.angularvel_2_motorcmd(self.l_wheel_ang_vel_target)

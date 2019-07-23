@@ -6,7 +6,7 @@ import numpy
 import tf
 
 # Messages
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Float64
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Point, Quaternion, Twist
 
@@ -19,8 +19,9 @@ class OdomPublisher:
 	def __init__(self):
 		rospy.init_node('diffdrive_odom')
 		#Subscribers
-		self.l_wheel_ang_vel_enc_sub = rospy.Subscriber('l_wheel_ang_vel_enc', Float32, self.l_wheel_ang_vel_enc_callback)
-		self.r_wheel_ang_vel_enc_sub = rospy.Subscriber('r_wheel_ang_vel_enc', Float32, self.r_wheel_ang_vel_enc_callback)
+		self.l_wheel_ang_vel_enc_sub = rospy.Subscriber('l_wheel_ang_vel_enc', Float64, self.l_wheel_ang_vel_enc_callback)
+		self.r_wheel_ang_vel_enc_sub = rospy.Subscriber('r_wheel_ang_vel_enc', Float64, self.r_wheel_ang_vel_enc_callback)
+
 		#Publishers
 		self.l_wheel_tan_vel_enc_pub = rospy.Publisher('l_wheel_tan_vel_enc', Float32, queue_size = 10)
 		self.r_wheel_tan_vel_enc_pub = rospy.Publisher('r_wheel_tan_vel_enc', Float32, queue_size = 10)
@@ -38,6 +39,8 @@ class OdomPublisher:
 		self.tf_broadcaster = tf.TransformBroadcaster()
 		self.l_wheel_ang_vel_enc = 0;
 		self.r_wheel_ang_vel_enc = 0;
+		self.l_wheel_direction = 0;
+		self.r_wheel_direction = 0;
 		self.pose = {'x':0, 'y':0, 'th':0}
 		self.time_prev_update = rospy.Time.now();
 
@@ -71,7 +74,7 @@ class OdomPublisher:
 		else:
 			v = (l_wheel_tan_vel_enc + r_wheel_tan_vel_enc) / 2.0
 			w = (r_wheel_tan_vel_enc - l_wheel_tan_vel_enc) / self.L
-			r_icc = (self.L / 2.0) * (l_wheel_tan_vel_enc + r_wheel_tan_vel_enc) / (r_wheel_tan_vel_enc - l_wheel_tan_vel_enc)
+			r_icc = (self.L / 2.0) * ((l_wheel_tan_vel_enc + r_wheel_tan_vel_enc) / (r_wheel_tan_vel_enc - l_wheel_tan_vel_enc))
  			#update pose using matrixes
 			translation = numpy.matrix([[x - r_icc*numpy.sin(th)], [y + r_icc*numpy.cos(th)], [w*dt]])
 			icc_pt = numpy.matrix([[r_icc*numpy.sin(th)],[-r_icc*numpy.cos(th)], [th]])
@@ -85,7 +88,7 @@ class OdomPublisher:
 		return {'x':x, 'y':y, 'th':th, 'v':v, 'w':w}
 
 	def pose_update(self):
-		l_wheel_tan_vel_enc = self.angularvel_2_tangentvel(self.l_wheel_ang_vel_enc)
+		l_wheel_tan_vel_enc = self.angularvel_2_tangentvel(self.l_wheel_ang_vel_enc )
 		r_wheel_tan_vel_enc = self.angularvel_2_tangentvel(self.r_wheel_ang_vel_enc)
 		self.l_wheel_tan_vel_enc_pub.publish(l_wheel_tan_vel_enc)
 		self.r_wheel_tan_vel_enc_pub.publish(r_wheel_tan_vel_enc)
